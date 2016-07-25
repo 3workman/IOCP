@@ -81,7 +81,7 @@ bool ServLinkMgr::CreateServer()
 	memset(_arrLink, 0, sizeof(_arrLink));
 	for (int i = 0; i < _nMaxLink; ++i)
 	{
-		_arrLink[i] = new ServLink(this, _config.nSendBuffer); // 创建所有link
+		_arrLink[i] = new ServLink(this, _config.nSendBuffer); //TODO：创建所有link，太占内存了，可以优化为一个带上限的池子
 		if (_nAccept < _config.nPreCreate)
 		{
 			if (!_arrLink[i]->CreateLinkAndAccept())  // 【里面会创建客户端socket，并AcceptEx(m_hListener, sClient...)】
@@ -162,7 +162,7 @@ bool ServLinkMgr::RunThread()
 }
 void ServLinkMgr::Maintain(time_t timenow)
 {
-	for (int i = 0; i < _nMaxLink; ++i)
+	for (int i = 0; i < _nMaxLink; ++i) //TODO：Link开到2w，大多是无效的，做个池子优化
 	{
 		if (_arrLink[i]->IsSocket())
 			_arrLink[i]->Maintain(timenow);
