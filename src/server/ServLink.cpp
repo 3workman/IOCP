@@ -38,7 +38,7 @@ ServLink::ServLink(ServLinkMgr* pMgr, DWORD sendbuffsize)
 #ifdef _Use_ArrayBuf
 	, _recvBuf(new char[2 * IN_BUFFER_SIZE])
 #else
-	, _recvBuf(2 * IN_BUFFER_SIZE) //_recvBuf开两倍大小，避免接收缓冲不够，见PostRecv()的FIXME
+	, _recvBuf(2 * IN_BUFFER_SIZE) //_recvBuf开两倍大小，避免接收缓冲不够，见PostRecv()的Notice
 #endif
 	, _pMgr(pMgr)
 {

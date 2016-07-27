@@ -14,7 +14,6 @@ struct ServerConfig
 {
 	std::string strIP = "127.0.0.1";
 	DWORD dwPort = 4567;
-	DWORD dwLinks = 1/*20000*/;
 	DWORD nRecvPacketCheckTime = 10;
 	DWORD nRecvPacketLimit = 20;
 	DWORD nMaxPackage = 1024;
@@ -25,7 +24,9 @@ struct ServerConfig
 	DWORD nRecvBuffer = 1024;
 	DWORD nSendBuffer = 1024;
 	DWORD DecodeWaitTime = 1000;	//connect完成到decode的最大时间(超过这个时间还没有decode 则会踢掉)  ms级
-	int	  nPreCreate = 1;		//预先AcceptEx所有的socket还是OnAccept时才创建？
+	DWORD dwMaxLink = 1/*20000*/;
+	int   nPreLink = 1;			//预先创建的Link
+	int	  nPreAccept = 1;		//预先投递的AcceptEx
 };
 
 enum InvalidMessageEnum{

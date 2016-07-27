@@ -31,8 +31,6 @@
 #include <winsock2.h>
 //////////////////////////////////////////////////////////////////////////
 
-const int c_nMaxLink = 2/*50000*/;
-
 class ServLink;
 class Thread;
 struct ServerConfig;
@@ -62,7 +60,6 @@ public:
 	// 检查sClient(ServerLink)，若Accept数量不够(创建监听socket时预先投递了几个Accept)，继续增加
 	void Maintain(time_t timenow);
 
-	ServLink* GetLink(DWORD id){ return id < (DWORD)_nMaxLink ? _arrLink[id - 1] : NULL; }
 	SOCKET GetListener(){ return _sListener; }
 
 	// 原子性操作：变更connect、accept、invalid数，两个原子操作中间有竞态的，会不会出Bug？
@@ -83,7 +80,6 @@ public:
 		InterlockedDecrement(&_nConnect);
 	}
 private:
-	int	_nMaxLink;
 	LONG _nInvalid;
 	LONG _nAccept;     // 正在等待连接的socket数量
 	LONG _nConnect;    // 已连接的socket数量
@@ -91,7 +87,9 @@ private:
 	Thread* _pThread;
 
 	SOCKET	_sListener;
-	ServLink* _arrLink[c_nMaxLink];
+	std::vector<ServLink*> _vecLink;
+	//const int c_nMaxLink = 2/*50000*/;
+	//ServLink* _arrLink[c_nMaxLink];
 };
 
 /************************************************************************/

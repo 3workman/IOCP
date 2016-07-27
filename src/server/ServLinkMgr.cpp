@@ -11,6 +11,7 @@
 ServLinkMgr::ServLinkMgr(const ServerConfig& info) : _config(info)
 {
 	_pThread = NULL;
+	_vecLink.reserve(info.dwMaxLink);
 }
 ServLinkMgr::~ServLinkMgr()
 {
@@ -38,14 +39,11 @@ bool ServLinkMgr::CleanWinsock()
 }
 bool ServLinkMgr::CreateServer()
 {
-	int nMaxLink = _config.dwLinks;
-	//nMaxLink = (nMaxLink + 4) / 5 * 5; //保持5的倍数
-	if (_config.dwPort == 0 || nMaxLink == 0 || nMaxLink >= c_nMaxLink)
-	{
-		printf("ServerConfig Error！");
-		return false;
-	}
-
+	//if (_config.dwMaxLink > c_nMaxLink)
+	//{
+	//	printf("ServerConfig Error！");
+	//	return false;
+	//}
 	_sListener = socket(AF_INET, SOCK_STREAM, 0);
 	if (_sListener == INVALID_SOCKET)
 	{
@@ -74,17 +72,29 @@ bool ServLinkMgr::CreateServer()
 	}
 
 	// 先投递几个AcceptEx，m_nAccept会在sClient投递完毕后更新
-	_nMaxLink = nMaxLink;
-	_nInvalid = nMaxLink;
+	_nInvalid = _config.dwMaxLink;
 	_nAccept = 0;
 	_nConnect = 0;
-	memset(_arrLink, 0, sizeof(_arrLink));
-	for (int i = 0; i < _nMaxLink; ++i)
+	//memset(_arrLink, 0, sizeof(_arrLink));
+	//for (int i = 0; i < _nMaxLink; ++i)
+	//{
+	//	_arrLink[i] = new ServLink(this, _config.nSendBuffer); //创建所有link，太占内存了，可以优化为一个带上限的池子
+	//	if (_nAccept < _config.nPreCreate)
+	//	{
+	//		if (!_arrLink[i]->CreateLinkAndAccept())
+	//		{
+	//			printf("创建link错误，请检查参数是否正确！");
+	//			return false;
+	//		}
+	//	}
+	//}
+	_vecLink.resize(_config.nPreLink); //先创建一批，Maintain里慢慢补
+	for (auto& it : _vecLink)
 	{
-		_arrLink[i] = new ServLink(this, _config.nSendBuffer); //TODO：创建所有link，太占内存了，可以优化为一个带上限的池子
-		if (_nAccept < _config.nPreCreate)
+		it = new ServLink(this, _config.nSendBuffer);
+		if (_nAccept < _config.nPreAccept)
 		{
-			if (!_arrLink[i]->CreateLinkAndAccept())  // 【里面会创建客户端socket，并AcceptEx(m_hListener, sClient...)】
+			if (!it->CreateLinkAndAccept())  //【里面会创建客户端socket，并AcceptEx(m_hListener, sClient...)】
 			{
 				printf("创建link错误，请检查参数是否正确！");
 				return false;
@@ -104,17 +114,16 @@ bool ServLinkMgr::Close()
 	printf("CloseListen");
 	closesocket(_sListener);
 
-	for (int i = 0; i < _nMaxLink; ++i)
+	for (auto& it : _vecLink)
 	{
-		if (_arrLink[i] && _arrLink[i]->IsSocket())
+		if (it->IsSocket())
 		{
-			_arrLink[i]->CloseLink();
+			it->CloseLink();
 		}
 	}
 	CleanWinsock();
 	Sleep(2000);
-	for (int i = 0; i < _nMaxLink; ++i)
-		delete _arrLink[i];
+	for (auto& it : _vecLink) { delete it; }
 	return true;
 }
 
@@ -142,11 +151,11 @@ bool ServLinkMgr::RunThread()
 
 		time(&_timeNow);
 
-		for (int i = 0; i < _nMaxLink; ++i)
+		for (auto& it : _vecLink)
 		{
-			if (_arrLink[i]->IsConnected())
+			if (it->IsConnected())
 			{
-				_arrLink[i]->ServerRun_SendIO(); //【brief.7】另辟线程定期发送所有buffer
+				it->ServerRun_SendIO(); //【brief.7】另辟线程定期发送所有buffer
 			}
 		}
 
@@ -162,20 +171,31 @@ bool ServLinkMgr::RunThread()
 }
 void ServLinkMgr::Maintain(time_t timenow)
 {
-	for (int i = 0; i < _nMaxLink; ++i) //TODO：Link开到2w，大多是无效的，做个池子优化
+	for (auto& it : _vecLink)
 	{
-		if (_arrLink[i]->IsSocket())
-			_arrLink[i]->Maintain(timenow);
-		else if (_nAccept < _config.nPreCreate)
-			_arrLink[i]->CreateLinkAndAccept();
+		if (it->IsSocket())
+			it->Maintain(timenow);
+		else if (_nAccept < _config.nPreAccept)
+			it->CreateLinkAndAccept();
+	}
+	//Notice：还不够，补新的
+	while (_nAccept < _config.nPreAccept && _vecLink.size() < _config.dwMaxLink)
+	{
+		if (ServLink* pLink = new ServLink(this, _config.nSendBuffer)) //TODO：可以做个对象池优化下
+		{
+			_vecLink.push_back(pLink);
+			pLink->CreateLinkAndAccept();
+		}
 	}
 }
 
 void ServLinkMgr::BroadcastMsg(stMsg& msg, DWORD msgSize)
 {
-	for (int i = 0; i < _nMaxLink; ++i)
+	for (auto& it : _vecLink)
 	{
-		if (_arrLink[i]->IsConnected())
-			_arrLink[i]->SendMsg(msg, msgSize);
+		if (it->IsConnected())
+		{
+			it->SendMsg(msg, msgSize);
+		}
 	}
 }
