@@ -42,22 +42,12 @@ ServLink::ServLink(ServLinkMgr* pMgr, DWORD sendbuffsize)
 #endif
 	, _pMgr(pMgr)
 {
-	_sClient = INVALID_SOCKET;
-
 	_ovSend.eType = IO_Write;
 	_ovRecv.eType = IO_Read;
 
-	_eState = STATE_DEAD;			// unsafe
-
-	InitializeCriticalSection(&_csLock);
-
 	_nLinkID = ++s_nID; // LinkID从1开始
 
-	_eLastError = Message_NoError;
-
-	_bCanWrite = true;
-
-	_timeInvalid = 0;
+	InitializeCriticalSection(&_csLock);
 }
 ServLink::~ServLink()
 {
@@ -80,17 +70,16 @@ bool ServLink::SendMsg(stMsg& msg, DWORD msgSize)
 
 	cLock lock(_csLock);
 
-	//【brief.6】限制buf能增长到的最大长度，避免整理延时的内存占用
+	//【brief.6】限制buf能增长到的最大长度，避免整体延时的内存占用
 	_sendBuf.append(msgSize);
 	_sendBuf.append(&msg, msgSize);
-
 	//if (!_sendBuf.append(pAddedBuffer, dwAddedSize))
 	//{
 	//	OnInvalidMessage(Message_Overflow11, 0, true);
 	//	return false;
 	//}
 
-	//【brief.7】消息积累超过定长后才调底层API，同时要在其它线程定期发送所有数据，避免消息延时
+	//【brief.7】并包优化，同时要在其它线程定期发送所有数据，避免消息延时
 	if (_sendBuf.readableBytes() < _sendBuf.size() / 4) return true;
 
 	if (_bCanWrite && msgSize > 0)
@@ -119,12 +108,6 @@ void ServLink::DoneIOCallback(DWORD dwNumberOfBytesTransferred, EnumIO type)
 		}
 		return;
 	}
-
-	//if (0 == dwNumberOfBytesTransferred){
-	//	// DoneIO的数据为0就断开，不会误伤吗？
-	//	OnInvalidMessage(DoneIO_ZeroByte, 0, false);
-	//	return;
-	//}
 
 	if (type == IO_Write){ // 处理写IO的完成回调
 

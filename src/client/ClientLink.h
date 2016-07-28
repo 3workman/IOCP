@@ -70,15 +70,15 @@ public:
 	void HandleServerMessage(stMsg* p, DWORD size){ printf("Echo: %s\n", (char*)p); /*放入主循环消息队列*/ }
 
 private:
-	EStatus _eState;
-	SOCKET _sClient;
+	EStatus _eState = State_Close;
+	SOCKET _sClient = INVALID_SOCKET;
 	My_OVERLAPPED _ovRecv;
 	My_OVERLAPPED _ovSend;
 
 	net::Buffer _recvBuf;
 	net::Buffer _sendBuf;
 
-	bool _bCanWrite;
+	bool _bCanWrite = true;
 
 	CRITICAL_SECTION _csRead;
 	CRITICAL_SECTION _csWrite;

@@ -128,16 +128,16 @@ bool ServLinkMgr::Close()
 }
 
 
-static void ServerThread(LPVOID pParam)
+static void AssistLoop(LPVOID pParam)
 {
-	((ServLinkMgr*)pParam)->RunThread();
+	((ServLinkMgr*)pParam)->_AssistLoop();
 }
-bool ServLinkMgr::ThreadStart()
+bool ServLinkMgr::AssistThreadLoop()
 {
 	_pThread = new Thread;
-	return _pThread->RunThread(ServerThread, this);
+	return _pThread->RunThread(::AssistLoop, this);
 }
-bool ServLinkMgr::RunThread()
+bool ServLinkMgr::_AssistLoop()
 {
 	if (!_pThread) return false;
 

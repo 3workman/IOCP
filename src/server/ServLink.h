@@ -75,7 +75,7 @@ public:
 
 	static WORD s_nID;
 
-	EStatus _eState;
+	EStatus _eState = STATE_DEAD;
 	void OnConnect();
 	bool CloseLink();
 	bool CreateLinkAndAccept();
@@ -83,7 +83,7 @@ public:
 
 	void DoneIOCallback(DWORD dwNumberOfBytesTransferred, EnumIO type);
 
-	bool _bCanWrite;            // 一次::WSASend()完毕，才能做下一次
+	bool _bCanWrite = true;     // 一次::WSASend()完毕，才能做下一次
 	void OnSend_DoneIO(DWORD dwNumberOfBytesTransferred);
 	void ServerRun_SendIO();	// 外部线程调用
 	bool PostSend(char* buffer, DWORD size);		// 投递一个发送IO(写)请求，Add a packet to output buffer
@@ -110,7 +110,7 @@ public:
 		}
 	}
 
-	InvalidMessageEnum _eLastError;
+	InvalidMessageEnum _eLastError = Message_NoError;
 	void OnInvalidMessage(InvalidMessageEnum e, int nErrorCode, bool bToClient, int nParam = 0);
 	void HandleClientMessage(stMsg* p, DWORD size){ printf("%s\n", (char*)p); /*放入主循环消息队列*/ SendMsg(*p, size); }
 	void HandleNetMessage(stMsg* p, DWORD size){}
@@ -168,12 +168,12 @@ private:
 	char _szIP[MAX_IP];
 	sockaddr_in _local;
 	sockaddr_in _peer;
-	SOCKET _sClient;		// Socket used to communicate with client
+	SOCKET _sClient = INVALID_SOCKET;	// Socket used to communicate with client
 	WSAEVENT _hEventClose;
 
 	ServLinkMgr* const _pMgr;
 	const ServerConfig& Config();
 
-	LONG _bInvalid;
-	time_t _timeInvalid;
+	LONG _bInvalid		= false;
+	time_t _timeInvalid = 0;
 };

@@ -11,7 +11,7 @@
 	5、某链接消息堆积，主动踢出
 	6、网络波动，整体延时，发送缓冲堆积，内存震荡
 	7、糊涂窗口综合征，多会设置TCP_NODELAY禁用Nagle算法，网络库自己管理数据发送
-		·消息积累超过定长后才调底层API
+		·并包优化，消息积累超过定长后才调底层API
 		·另辟线程(？)定期(50ms)发送所有buffer
 	8、SYN攻击，防止大量链接被无效占用
 	9、中间网络硬件引起的socket close，例如路由器炸了、网线被老鼠啃了
@@ -53,8 +53,8 @@ public:
 	bool CreateServer();
 	bool Close();
 
-	bool ThreadStart();	//create a thread to run !
-	bool RunThread();
+	bool AssistThreadLoop();
+	bool _AssistLoop();
 	void BroadcastMsg(stMsg& msg, DWORD msgSize);
 
 	// 检查sClient(ServerLink)，若Accept数量不够(创建监听socket时预先投递了几个Accept)，继续增加
@@ -100,14 +100,11 @@ void RunServerIOCP()
 {
 	cout << "———————————— RunServerIOCP ————————————" << endl;
 	ServerConfig config;
-	config.strIP = "127.0.0.1";
-	config.dwPort = 4567;
-
 	ServLinkMgr mgr(config);
 	ServLinkMgr::InitWinsock();
 	mgr.CreateServer();
 
-	mgr.ThreadStart();
+	mgr.AssistThreadLoop();
 	Sleep(1000 * 600);
 }
 #endif
