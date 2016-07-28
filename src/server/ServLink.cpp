@@ -462,6 +462,12 @@ void ServLink::OnSend_DoneIO(DWORD dwNumberOfBytesTransferred)
 
 	_sendBuf.readerMove(dwNumberOfBytesTransferred); //否则，移动消息指针，继续发送多余部分
 
+	/*
+		PostSend()只有三调用处：业务层SendMsg、辅助线程ServerRun_SendIO、DoneIO回调的补发
+		补发会不会降低性能？毕竟PostSend()是一个个来的，其它两要等~
+		有了辅助线程ServerRun_SendIO()，这里的补发貌似可以省掉
+		否则，必不可少，比如：业务层发了最后一条msg，但一次io并未发完
+	*/
 	if (DWORD nLeft = _sendBuf.readableBytes())
 	{
 		PostSend(_sendBuf.beginRead(), nLeft);

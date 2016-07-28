@@ -6,6 +6,11 @@
 		·另外，同时投递多个SendIO，实际的IO操作可能不是有序的
 		·PostSend共有三处调用(不同线程)要加锁：逻辑线程SendMsg、IO线程补发、辅助线程定期投递
 		·发送长度过大塞满socket缓冲区，甚至tcp滑动窗口[TCP Zerowindow]
+
+		·为提高吞吐量，可以多次投递SendIO，只要解决两个问题：
+			(1)socket的发送缓冲不能只一个了，因为数据可能只发出部分，并行send，流数据可能错乱
+			(2)IO工作线程调度不可控，消息可能失序，自己得加序号，对端收到后据序号重排，再交给业务层
+		·游戏这么做的收益不大，性能提升有限，代码复杂度剧增；外网运行情况看，顺序式的PostSendIO表现很好了
 	2、对端只Connect不发数据，DoneIO不会被回调
 	3、DoneIO的dwNumberOfBytesTransferred为空
 		·socket关闭的回调，此值为0

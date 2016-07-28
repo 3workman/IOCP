@@ -130,8 +130,7 @@ bool ServLinkMgr::Close()
 
 static void ServerThread(LPVOID pParam)
 {
-	ServLinkMgr* p = (ServLinkMgr*)pParam;
-	p->RunThread();
+	((ServLinkMgr*)pParam)->RunThread();
 }
 bool ServLinkMgr::ThreadStart()
 {
@@ -140,10 +139,12 @@ bool ServLinkMgr::ThreadStart()
 }
 bool ServLinkMgr::RunThread()
 {
+	if (_pThread) return false;
+
 	time(&_timeNow);
 	DWORD dwInitTime = GetTickCount();
 	DWORD dwElaspedTime = 0;
-	while (_pThread && _pThread->WaitKillEvent(10) == WAIT_TIMEOUT)
+	while (WAIT_TIMEOUT == _pThread->WaitKillEvent(10))
 	{
 		DWORD tempNow = GetTickCount();
 		DWORD tempElasped = tempNow - dwInitTime;
