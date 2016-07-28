@@ -7,7 +7,7 @@
 
 #define MAX_Connect_Seconds	3  // 几秒连接不上，踢掉
 #define MAX_Silent_Seconds	5  // 几秒没收到数据，检查是否发生socket close
-#define MAX_Invalid_Seconds 20 // 链接无效持续几秒，closesocket【本程序中需断开链接时，先shutdown成无效链接，再才真正回收socket】
+#define MAX_Invalid_Seconds 5  // 链接无效持续几秒，closesocket【本程序中需断开链接时，先shutdown成无效链接，再才真正回收socket】
 
 // closesocket && shutdown
 /*
@@ -80,9 +80,8 @@ bool ServLink::SendMsg(stMsg& msg, DWORD msgSize)
 
 	cLock lock(_csLock);
 
-	msg.len = msgSize;
-
 	//【brief.6】限制buf能增长到的最大长度，避免整理延时的内存占用
+	_sendBuf.append(msgSize);
 	_sendBuf.append(&msg, msgSize);
 
 	//if (!_sendBuf.append(pAddedBuffer, dwAddedSize))
@@ -587,8 +586,8 @@ char* ServLink::OnRead_DoneIO(DWORD dwBytesTransferred)
 	char* pPack = _recvBuf.beginRead();
 	while (_recvBuf.readableBytes() >= c_off)
 	{
-		const DWORD c_packSize = *((DWORD*)pPack);	// 【网络包：头4字节为包大小】
-		const DWORD c_msgSize = c_packSize - c_off;	// 【消息体大小 = 网络包长 - 头长度】
+		const DWORD c_msgSize = *((DWORD*)pPack);	// 【网络包：头4字节为消息体大小】
+		const DWORD c_packSize = c_msgSize + c_off;	// 【网络包长 = 消息体大小 + 头长度】
 		const char* pMsg = pPack + c_off;           // 【后移4字节得：消息体指针】
 
 		// 1、检查消息大小

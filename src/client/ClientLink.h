@@ -22,9 +22,7 @@
 
 class ClientLink;
 
-struct stMsg
-{
-	int len; // 包大小
+struct stMsg{
 };
 
 enum EnumIO{ IO_Write, IO_Read };
@@ -69,7 +67,7 @@ public:
 
 	void SendMsg(stMsg& msg, DWORD size);
 
-	void HandleServerMessage(stMsg* p, DWORD size){ printf("%s\n", (char*)p); /*放入主循环消息队列*/ }
+	void HandleServerMessage(stMsg* p, DWORD size){ printf("Echo: %s\n", (char*)p); /*放入主循环消息队列*/ }
 
 private:
 	EStatus _eState;
@@ -115,10 +113,10 @@ void RunClientIOCP()
 	// 客户端connect，三次握手成功后，在对端被放入“呼入连接请求队列”，尚未被用户进程接管，但client这边已经能发数据了
 	strcpy_s(msg.data, "道友，你可听过醉寒江么？");
 	link.SendMsg(msg, msg.size());
+	cout << "请输入发送内容..." << endl;
 
 	while (true)
 	{
-		cout << "输入发送内容" << endl;
 		cin >> msg.data;
 		link.SendMsg(msg, msg.size());
 	}

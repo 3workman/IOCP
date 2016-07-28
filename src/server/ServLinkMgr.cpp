@@ -139,7 +139,7 @@ bool ServLinkMgr::ThreadStart()
 }
 bool ServLinkMgr::RunThread()
 {
-	if (_pThread) return false;
+	if (!_pThread) return false;
 
 	time(&_timeNow);
 	DWORD dwInitTime = GetTickCount();

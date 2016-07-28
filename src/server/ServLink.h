@@ -112,7 +112,7 @@ public:
 
 	InvalidMessageEnum _eLastError;
 	void OnInvalidMessage(InvalidMessageEnum e, int nErrorCode, bool bToClient, int nParam = 0);
-	void HandleClientMessage(stMsg* p, DWORD size){ printf("%s\n", (char*)p); /*放入主循环消息队列*/ }
+	void HandleClientMessage(stMsg* p, DWORD size){ printf("%s\n", (char*)p); /*放入主循环消息队列*/ SendMsg(*p, size); }
 	void HandleNetMessage(stMsg* p, DWORD size){}
 
 	void Err(LPCSTR sz){

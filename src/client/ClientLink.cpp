@@ -249,8 +249,8 @@ void ClientLink::OnRead_DoneIO(DWORD dwBytesTransferred)
 	char* pPack = _recvBuf.beginRead();
 	while (_recvBuf.readableBytes() >= c_off)
 	{
-		const DWORD c_packSize = *((DWORD*)pPack);	// 【网络包：头4字节为包大小】
-		const DWORD c_msgSize = c_packSize - c_off;	// 【消息体大小 = 网络包长 - 头长度】
+		const DWORD c_msgSize = *((DWORD*)pPack);	// 【网络包：头4字节为消息体大小】
+		const DWORD c_packSize = c_msgSize + c_off;	// 【网络包长 = 消息体大小 + 头长度】
 		const char* pMsg = pPack + c_off;           // 【后移4字节得：消息体指针】
 
 		if (c_packSize > _recvBuf.readableBytes()) break;         // 【包未收完：接收字节 < 包大小】
@@ -272,8 +272,7 @@ void ClientLink::SendMsg(stMsg& msg, DWORD size)
 {
 	cLock lock(_csWrite);
 
-	msg.len = size;
-
+	_sendBuf.append(size);
 	_sendBuf.append(&msg, size);
 
 	//客户端无需像服务器似的，消息积累超长才投递，见ServLink::SendMsg

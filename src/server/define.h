@@ -5,7 +5,6 @@
 #define MAX_IP 16
 
 struct stMsg{
-	int len; // ฐüด๓ะก
 };
 
 void CALLBACK DoneIO(DWORD, DWORD, LPOVERLAPPED);
