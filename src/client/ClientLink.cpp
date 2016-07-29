@@ -20,8 +20,8 @@ void CALLBACK ClientLink::DoneIO(DWORD dwErrorCode,
 
 	if (0 != dwErrorCode && dwErrorCode != ERROR_HANDLE_EOF)
 	{
-		client->CloseClient(dwErrorCode);
 		printf("DoneIO Err code:%x - bytes:%d \n", dwErrorCode, dwNumberOfBytesTransferred);
+		client->CloseClient(dwErrorCode);
 		return;
 	}
 	client->DoneIOCallback(dwNumberOfBytesTransferred, ov->eType);
@@ -74,7 +74,7 @@ void ClientLink::DoneIOCallback(DWORD dwNumberOfBytesTransferred, EnumIO type)
 			cLock lock(_csWrite);
 			OnConnect();
 		}
-		else if (_eState == State_Connected)
+		if (_eState == State_Connected)
 		{
 			if (dwNumberOfBytesTransferred)
 			{
@@ -92,6 +92,8 @@ void ClientLink::DoneIOCallback(DWORD dwNumberOfBytesTransferred, EnumIO type)
 
 				PostRecv(_recvBuf.beginWrite(), _recvBuf.writableBytes());
 			}
+			else
+				CloseClient(0); //收到0包，对端关闭了
 		}
 	}
 }
@@ -187,9 +189,10 @@ void ClientLink::OnConnect()
 }
 void ClientLink::CloseClient(int nErrorCode)
 {
+	printf("CloseClient ErrCode:%d \n", nErrorCode);
 	_eState = State_Close;
-	shutdown(_eState, SD_BOTH);
-	closesocket(_eState); // 客户端的关闭好暴力~
+	shutdown(_sClient, SD_BOTH);
+	closesocket(_sClient); // 客户端的关闭好暴力~
 }
 
 void ClientLink::OnSend_DoneIO(DWORD dwBytesTransferred)

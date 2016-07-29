@@ -118,6 +118,7 @@ void RunClientIOCP()
 	while (true)
 	{
 		cin >> msg.data;
+		//link.CloseClient(0); //≤‚ ‘πÿ±’¡¨Ω”
 		link.SendMsg(msg, msg.size());
 	}
 	link.CloseClient(0);

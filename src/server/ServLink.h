@@ -29,6 +29,12 @@
 		·此时，服务器可以简单的调用非阻塞式的recv将socket缓冲区中的数据全部读出来，一直到recv返回 WSAEWOULDBLOCK 为止
 		·这种设计非常适合那些可以牺牲数据吞吐量而换取巨大并发连接数的服务器
 		·用“非阻塞的recv”读socket时，若预计服务器会有爆发数据流，可以考虑投递一个或多个receive来取代“非阻塞的recv”
+
+	【优化】
+		·目前的关闭方式：Invalid()里shutdown(SD_RECEIVE)，等待三分钟后才强制closesocket（等的时间太长了~囧）
+		·先设无效标记，检查WSASend，无ERROR_IO_PENDING时调shutdown(SD_SEND)
+		·tcp缓冲发完后FIN，客户端收到后回FIN（四次握手关闭连接），ServLink收到0包，进而closesocket（DoneIOCallback中IO_Read无效时仍要能收）
+		·客户端断电就收不到回的FIN了，所以得shutdown列表，5秒还不关就强关
 * @ author zhoumf
 * @ date 2016-7-15
 ************************************************************************/

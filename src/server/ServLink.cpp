@@ -116,7 +116,7 @@ void ServLink::DoneIOCallback(DWORD dwNumberOfBytesTransferred, EnumIO type)
 	}else if (type == IO_Read){  // 处理读IO的完成回调
 		if (_bInvalid)
 		{
-			(_eState == STATE_ACCEPTING) ? printf("Error_DoneIOCallback : Accepting ID: %d \n", _nLinkID) : printf("Error_DoneIOCallback : Connect ID: %d \n", _nLinkID);
+			Err("DoneIOCallback IO_Read Invalid! State:", _eState);
 			return;
 		}
 
@@ -138,7 +138,7 @@ void ServLink::DoneIOCallback(DWORD dwNumberOfBytesTransferred, EnumIO type)
 			PostRecv(buf);
 		}
 		else{
-			printf("Error_DoneIOCallback : NotConnect ID: %d \n", _nLinkID);
+			Err("DoneIOCallback NotConnect");
 		}
 	}
 }

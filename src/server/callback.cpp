@@ -26,8 +26,8 @@ void CALLBACK DoneIO(DWORD dwErrorCode,
 
 	if (0 != dwErrorCode && dwErrorCode != ERROR_HANDLE_EOF)
 	{
+		printf("DoneIO Errcode:%x - id:%d - bytes:%d \n", dwErrorCode, client->GetID(), dwNumberOfBytesTransferred);
 		client->Invalid(DoneIO_Error);
-		printf("DoneIO Err code:%x - id:%d - bytes:%d \n", dwErrorCode, client->GetID(), dwNumberOfBytesTransferred);
 		return;
 	}
 	client->DoneIOCallback(dwNumberOfBytesTransferred, ov->eType);
