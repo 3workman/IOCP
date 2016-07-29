@@ -115,6 +115,15 @@ bool ClientLink::CreateLinkAndConnect()
 		return false;
 	}
 
+	//关闭Nagle算法，无论多小的包都直接发
+	//如果不关闭，client的网络延时会不会出现震荡？一次只准发一个小包，其它的会堆积等待
+	bool noDelay = true;
+	if (setsockopt(_sClient, IPPROTO_TCP, TCP_NODELAY, (char*)&noDelay, sizeof(noDelay)) == SOCKET_ERROR)
+	{
+		printf("setsockopt() failed with TCP_NODELAY");
+		return false;
+	}
+
 	SOCKADDR_IN addr;
 	addr.sin_family = AF_INET;
 	addr.sin_addr.s_addr = INADDR_ANY;

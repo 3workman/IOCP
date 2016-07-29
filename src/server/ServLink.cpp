@@ -179,6 +179,12 @@ bool ServLink::CreateLinkAndAccept()
 		Err("ErrorAPI_createlink_socket");
 		goto fail;
 	}
+	bool noDelay = true;
+	if (setsockopt(_sClient, IPPROTO_TCP, TCP_NODELAY, (char*)&noDelay, sizeof(noDelay)) == SOCKET_ERROR)
+	{
+		printf("setsockopt() failed with TCP_NODELAY");
+		goto fail;
+	}
 
 	DWORD dwBytes(0);
 	if (!AcceptEx(_pMgr->GetListener(), _sClient,
@@ -211,7 +217,7 @@ bool ServLink::CreateLinkAndAccept()
 		_hEventClose = NULL;
 	}
 
-	printf("CreateLinkAndAccept socket IP:%s - ID:%d\n", _szIP, _nLinkID);
+	printf("CreateLinkAndAccept socket - ID:%d\n", _nLinkID);
 	return true;
 fail:
 	_bInvalid = true;

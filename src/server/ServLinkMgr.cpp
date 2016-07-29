@@ -39,17 +39,19 @@ bool ServLinkMgr::CleanWinsock()
 }
 bool ServLinkMgr::CreateServer()
 {
-	//if (_config.dwMaxLink > c_nMaxLink)
-	//{
-	//	printf("ServerConfig Error！");
-	//	return false;
-	//}
 	_sListener = socket(AF_INET, SOCK_STREAM, 0);
 	if (_sListener == INVALID_SOCKET)
 	{
 		printf("创建socket错误，请检查socket是否被初始化！");
 		return false;
 	}
+	bool reuseAddr = true;
+	if (setsockopt(_sListener, SOL_SOCKET, SO_REUSEADDR, (char*)&reuseAddr, sizeof(reuseAddr)) == SOCKET_ERROR)
+	{
+		printf("setsockopt() failed with SO_REUSEADDR");
+		return false;
+	}
+
 	SOCKADDR_IN addr;
 	addr.sin_family = AF_INET;
 	addr.sin_addr.s_addr = inet_addr(_config.strIP.c_str());
