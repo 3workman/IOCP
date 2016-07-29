@@ -45,8 +45,9 @@ enum InvalidMessageEnum{
 	Message_Write			= 14,
 	Message_Read			= 15,
 	Message_TooHugePacket	= 16,
-	DoneIO_ErrorCode		= 17,
+	DoneIO_Error			= 17,
 	Message_TooMuchPacket   = 18,
+	Setsockopt_Error		= 19,
 
 	MessagInvalide_Num
 };

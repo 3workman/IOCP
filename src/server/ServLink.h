@@ -100,9 +100,8 @@ public:
 
 	bool IsSocket(){ return _sClient != INVALID_SOCKET; }
 	bool IsConnected(){ return _eState == STATE_CONNECTED; }
-	bool IsInvalid(){ return _bInvalid != 0; }
 	void Invalid(InvalidMessageEnum eReason){
-		_bInvalid = true;
+		InterlockedExchange(&_bInvalid, 1); //∂‡œﬂ≥Ãbug
 		time(&_timeInvalid);
 		if (_sClient != INVALID_SOCKET){
 			shutdown(_sClient, SD_RECEIVE);

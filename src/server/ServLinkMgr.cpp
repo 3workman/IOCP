@@ -45,6 +45,8 @@ bool ServLinkMgr::CreateServer()
 		printf("创建socket错误，请检查socket是否被初始化！");
 		return false;
 	}
+
+	//FIXME：ServLink用的SO_LINGER强制关闭，没有TIME_WAIT，不必SO_REUSEADDR吧~
 	bool reuseAddr = true;
 	if (setsockopt(_sListener, SOL_SOCKET, SO_REUSEADDR, (char*)&reuseAddr, sizeof(reuseAddr)) == SOCKET_ERROR)
 	{

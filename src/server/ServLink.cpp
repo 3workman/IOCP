@@ -60,7 +60,7 @@ ServLink::~ServLink()
 
 bool ServLink::SendMsg(stMsg& msg, DWORD msgSize)
 {
-	if (IsInvalid()) return false;
+	if (_bInvalid) return false;
 
 	if (msgSize >= MAX_SEND)
 	{
@@ -114,7 +114,7 @@ void ServLink::DoneIOCallback(DWORD dwNumberOfBytesTransferred, EnumIO type)
 		if (_eState == STATE_CONNECTED) OnSend_DoneIO(dwNumberOfBytesTransferred); // 仍连接时，要处理发送缓冲的更新(有东西已发走了)
 
 	}else if (type == IO_Read){  // 处理读IO的完成回调
-		if (IsInvalid())
+		if (_bInvalid)
 		{
 			(_eState == STATE_ACCEPTING) ? printf("Error_DoneIOCallback : Accepting ID: %d \n", _nLinkID) : printf("Error_DoneIOCallback : Connect ID: %d \n", _nLinkID);
 			return;
@@ -182,7 +182,7 @@ bool ServLink::CreateLinkAndAccept()
 	bool noDelay = true;
 	if (setsockopt(_sClient, IPPROTO_TCP, TCP_NODELAY, (char*)&noDelay, sizeof(noDelay)) == SOCKET_ERROR)
 	{
-		printf("setsockopt() failed with TCP_NODELAY");
+		Err("setsockopt() failed with TCP_NODELAY");
 		goto fail;
 	}
 
@@ -229,10 +229,13 @@ void ServLink::OnConnect()	// state Move from ACCEPTING to CONNECTED
 	assert(_eState == STATE_ACCEPTING);
 	m_dwLastHeart = -1;
 
-	//if (m_msgSend.GetSize() != m_nSendSize)
-	//{
-	//	m_msgSend.ResizeBuffer(m_nSendSize);
-	//}
+	SOCKET listen = _pMgr->GetListener();
+	if (setsockopt(_sClient, SOL_SOCKET, SO_UPDATE_ACCEPT_CONTEXT, (char*)(&listen), sizeof(listen)) == SOCKET_ERROR)
+	{
+		Err("setsockopt() failed with SO_UPDATE_ACCEPT_CONTEXT failed");
+		OnInvalidMessage(Setsockopt_Error, 0, false);
+		return;
+	}
 
 	if (BindIoCompletionCallback((HANDLE)_sClient, DoneIO, 0)){
 		_eState = STATE_CONNECTED;
@@ -241,7 +244,7 @@ void ServLink::OnConnect()	// state Move from ACCEPTING to CONNECTED
 		printf("Connect -- id:%d, IP:%s \n", _nLinkID, _szIP);
 	}else{
 		int error = GetLastError();
-		Err("ErrorAPI_onconnect_BindIO: %d - %d", error);
+		Err("ErrorAPI_onconnect_BindIO", error);
 		OnInvalidMessage(Net_BindIO, error, false);
 	}
 }
@@ -332,7 +335,7 @@ void ServLink::Maintain(time_t timenow)
 	2. Clients that connect, send something, and remain connected for too long.
 	(there are other kinds of abusive clients, but only these two kinds need to be looked for at a periodic manner.)*/
 
-	if (IsInvalid() && (timenow - _timeInvalid > 1)) // 很奇怪的"> 1" ~囧？
+	if (_bInvalid && (timenow - _timeInvalid > 1)) // 很奇怪的"> 1" ~囧？
 	{
 		//没有登陆，没有游戏，没有连接的时候才能CloseLink
 		//还有一条，并且在1分钟以上没有发送消息才能CloseLink
@@ -419,7 +422,7 @@ void ServLink::OnInvalidMessage(InvalidMessageEnum e, int nErrorCode, bool bToCl
 		SendMsg(msg, sizeof(msg));
 	}
 
-	if (InterlockedExchange(&_bInvalid, 1) == 1) return; // 旧值已是无效的
+	if (_bInvalid) return;
 
 	_eLastError = e;
 
@@ -490,7 +493,7 @@ bool ServLink::PostSend(char* buffer, DWORD nLen)
 		int nLastError = WSAGetLastError();
 		if (nLastError != ERROR_IO_PENDING)
 		{
-			printf("WSASendError %x - %d", nLastError, _nLinkID);
+			Err("WSASendError", nLastError);
 			OnInvalidMessage(Message_Write, nLastError, false);
 			return false;
 		}
@@ -514,7 +517,7 @@ bool ServLink::PostRecv(char* buf)
 			int nLastError = WSAGetLastError();
 			if (nLastError != ERROR_IO_PENDING)
 			{
-				printf("ReadError %x - %d", nLastError, _nLinkID);
+				Err("WSARecv", nLastError);
 				OnInvalidMessage(Message_Read, nLastError, false);
 			}
 		}
@@ -602,7 +605,7 @@ char* ServLink::OnRead_DoneIO(DWORD dwBytesTransferred)
 #endif
 int ServLink::RecvMsg(const char* buffer, DWORD size)
 {
-	if (IsInvalid()) return -1;
+	if (_bInvalid) return -1;
 
 	OnHeartMsg();
 
