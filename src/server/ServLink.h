@@ -74,7 +74,7 @@ struct My_OVERLAPPED : public OVERLAPPED
 class ServLink{
 	enum EStatus{ STATE_DEAD, STATE_ACCEPTING, STATE_CONNECTED };
 public:
-	ServLink(ServLinkMgr* p, DWORD sendbuffsize);
+	ServLink(ServLinkMgr* p);
 	~ServLink();
 
 	static WORD s_nID;

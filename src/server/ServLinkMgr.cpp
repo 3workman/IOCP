@@ -57,7 +57,7 @@ bool ServLinkMgr::CreateServer()
 	SOCKADDR_IN addr;
 	addr.sin_family = AF_INET;
 	addr.sin_addr.s_addr = inet_addr(_config.strIP.c_str());
-	addr.sin_port = htons((short)_config.dwPort);
+	addr.sin_port = htons(_config.wPort);
 
 	if (0 != ::bind(_sListener, (SOCKADDR *)&addr, sizeof(addr)))
 	{
@@ -95,7 +95,7 @@ bool ServLinkMgr::CreateServer()
 	_vecLink.resize(_config.nPreLink); //先创建一批，Maintain里慢慢补
 	for (auto& it : _vecLink)
 	{
-		it = new ServLink(this, _config.nSendBuffer);
+		it = new ServLink(this);
 		if (_nAccept < _config.nPreAccept)
 		{
 			if (!it->CreateLinkAndAccept())  //【里面会创建客户端socket，并AcceptEx(m_hListener, sClient...)】
@@ -148,7 +148,7 @@ bool ServLinkMgr::_AssistLoop()
 	time(&_timeNow);
 	DWORD dwInitTime = GetTickCount();
 	DWORD dwElaspedTime = 0;
-	while (WAIT_TIMEOUT == _pThread->WaitKillEvent(10))
+	while (WAIT_TIMEOUT == _pThread->WaitKillEvent(_config.dwAssistLoopMs))
 	{
 		DWORD tempNow = GetTickCount();
 		DWORD tempElasped = tempNow - dwInitTime;
@@ -158,10 +158,7 @@ bool ServLinkMgr::_AssistLoop()
 
 		for (auto& it : _vecLink)
 		{
-			if (it->IsConnected())
-			{
-				it->ServerRun_SendIO(); //【brief.7】另辟线程定期发送所有buffer
-			}
+			if (it->IsConnected()) it->ServerRun_SendIO(); //【brief.7】另辟线程定期发送所有buffer
 		}
 
 		// 每格CHECK_CYCLE时间跑一次
@@ -186,7 +183,7 @@ void ServLinkMgr::Maintain(time_t timenow)
 	//Notice：还不够，补新的
 	while (_nAccept < _config.nPreAccept && _vecLink.size() < _config.dwMaxLink)
 	{
-		if (ServLink* pLink = new ServLink(this, _config.nSendBuffer)) //TODO：可以做个对象池优化下
+		if (ServLink* pLink = new ServLink(this)) //TODO：可以做个对象池优化下
 		{
 			_vecLink.push_back(pLink);
 			pLink->CreateLinkAndAccept();

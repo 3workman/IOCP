@@ -27,14 +27,12 @@
 */
 
 const DWORD IN_BUFFER_SIZE = 1024 * 4;
-const DWORD OUT_BUFFER_SIZE = 1024 * 8;
-const DWORD MAX_SEND = 1024 * 48;
 const DWORD MAX_MESSAGE_LENGTH = 1024 * 1024;
 
 WORD ServLink::s_nID = 0;
 
-ServLink::ServLink(ServLinkMgr* pMgr, DWORD sendbuffsize)
-	: _sendBuf(sendbuffsize)
+ServLink::ServLink(ServLinkMgr* pMgr)
+	: _sendBuf(IN_BUFFER_SIZE)
 	, _recvBuf(2 * IN_BUFFER_SIZE) //_recvBuf开两倍大小，避免接收缓冲不够，见PostRecv()的Notice
 	, _pMgr(pMgr)
 {
@@ -534,7 +532,7 @@ bool ServLink::SendMsg(stMsg& msg, DWORD msgSize)
 {
 	if (_bInvalid) return false;
 
-	if (msgSize >= MAX_SEND)
+	if (msgSize >= IN_BUFFER_SIZE)
 	{
 		OnInvalidMessage(Message_Overflow7, 0, true);
 		return false;

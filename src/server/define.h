@@ -12,16 +12,15 @@ void CALLBACK DoneIO(DWORD, DWORD, LPOVERLAPPED);
 struct ServerConfig
 {
 	std::string strIP = "127.0.0.1";
-	DWORD dwPort = 4567;
+	WORD  wPort = 4567;
 	DWORD nRecvPacketCheckTime = 10;
 	DWORD nRecvPacketLimit = 20;
+	DWORD dwAssistLoopMs = 10;
 	DWORD nMaxPackage = 1024;
 	int   nDeadTime = 300;
 	DWORD nTimeLoop = 10;		//多线程的情况下，多少时间遍历所有的socket,必须跟Send_Group一起使用
 	DWORD nInBuffer = 2048;
 	DWORD nPackSize = 512;
-	DWORD nRecvBuffer = 1024;
-	DWORD nSendBuffer = 1024;
 	DWORD DecodeWaitTime = 1000;	//connect完成到decode的最大时间(超过这个时间还没有decode 则会踢掉)  ms级
 	DWORD dwMaxLink = 1/*20000*/;
 	int   nPreLink = 1;			//预先创建的Link
