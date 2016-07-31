@@ -53,8 +53,6 @@
 #include "define.h"
 #include <time.h>
 
-//#define _Use_ArrayBuf
-
 class ServLink;
 class ServLinkMgr;
 struct ServerConfig;
@@ -157,12 +155,7 @@ private:
 	int _nCharID; // 角色内存池中的ID，有上限(5000)，若此ID有效表示Link真正建立了链接
 	int _nLinkID; // ServerLink自己的ID，可以很大
 
-#ifdef _Use_ArrayBuf
-	DWORD _nRecvSize;		// how much in buffer
-	char* const _recvBuf;	// 接收缓冲，指针不可改
-#else
 	net::Buffer _recvBuf;
-#endif
 	net::Buffer _sendBuf;
 
 	CRITICAL_SECTION _csLock;

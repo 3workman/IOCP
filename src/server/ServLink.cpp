@@ -35,11 +35,7 @@ WORD ServLink::s_nID = 0;
 
 ServLink::ServLink(ServLinkMgr* pMgr, DWORD sendbuffsize)
 	: _sendBuf(sendbuffsize)
-#ifdef _Use_ArrayBuf
-	, _recvBuf(new char[2 * IN_BUFFER_SIZE])
-#else
 	, _recvBuf(2 * IN_BUFFER_SIZE) //_recvBuf开两倍大小，避免接收缓冲不够，见PostRecv()的Notice
-#endif
 	, _pMgr(pMgr)
 {
 	_ovSend.eType = IO_Write;
@@ -51,42 +47,7 @@ ServLink::ServLink(ServLinkMgr* pMgr, DWORD sendbuffsize)
 }
 ServLink::~ServLink()
 {
-#ifdef _Use_ArrayBuf
-	if (_recvBuf) delete[]_recvBuf;
-#endif
-
 	DeleteCriticalSection(&_csLock);
-}
-
-bool ServLink::SendMsg(stMsg& msg, DWORD msgSize)
-{
-	if (_bInvalid) return false;
-
-	if (msgSize >= MAX_SEND)
-	{
-		OnInvalidMessage(Message_Overflow7, 0, true);
-		return false;
-	}
-
-	cLock lock(_csLock);
-
-	//【brief.6】限制buf能增长到的最大长度，避免整体延时的内存占用
-	_sendBuf.append(msgSize);
-	_sendBuf.append(&msg, msgSize);
-	//if (!_sendBuf.append(pAddedBuffer, dwAddedSize))
-	//{
-	//	OnInvalidMessage(Message_Overflow11, 0, true);
-	//	return false;
-	//}
-
-	//【brief.7】并包优化，同时要在其它线程定期发送所有数据，避免消息延时
-	if (_sendBuf.readableBytes() < _sendBuf.size() / 4) return true;
-
-	if (_bCanWrite && msgSize > 0)
-	{
-		return PostSend(_sendBuf.beginRead(), _sendBuf.readableBytes());
-	}
-	return true;
 }
 
 void ServLink::DoneIOCallback(DWORD dwNumberOfBytesTransferred, EnumIO type)
@@ -152,24 +113,13 @@ bool ServLink::CreateLinkAndAccept()
 
 	_ovSend.SetLink(this);
 	_ovRecv.SetLink(this);
-
-	_bCanWrite = true;
-
-	_timeInvalid = 0;
-
 	_sendBuf.clear();
-
-#ifdef _Use_ArrayBuf
-	_nRecvSize = 0;
-	char* pBuf = &_recvBuf[0];
-#else
 	_recvBuf.clear();
-	char* pBuf = _recvBuf.beginWrite();
-#endif
-
+	_bCanWrite = true;
+	_bInvalid = false;
+	_timeInvalid = 0;
 	strcpy_s(_szIP, "Unknow");
 
-	_bInvalid = false;
 	_eState = STATE_ACCEPTING;	// unsafe
 	_eLastError = Message_NoError;
 
@@ -186,6 +136,7 @@ bool ServLink::CreateLinkAndAccept()
 		goto fail;
 	}
 
+	char* pBuf = _recvBuf.beginWrite();
 	DWORD dwBytes(0);
 	if (!AcceptEx(_pMgr->GetListener(), _sClient,
 		pBuf,
@@ -202,7 +153,6 @@ bool ServLink::CreateLinkAndAccept()
 			goto fail;
 		}
 	}
-	//OnConnect may happened here...
 	_pMgr->LinkOnCreate(_nLinkID);
 
 	_hEventClose = WSACreateEvent();
@@ -223,6 +173,28 @@ fail:
 	_bInvalid = true;
 	_eState = STATE_DEAD;	// unsafe
 	return false;
+}
+void ServLink::UpdateAcceptAddr()
+{
+	int locallen, remotelen;
+	sockaddr_in *plocal = NULL, *premote = NULL;
+
+	char* pBuf = _recvBuf.beginWrite();
+	GetAcceptExSockaddrs(
+		pBuf,	//传递给AcceptEx的那块内存
+		IN_BUFFER_SIZE - (sizeof(sockaddr_in)+16) * 2,
+		sizeof(sockaddr_in)+16,
+		sizeof(sockaddr_in)+16,
+		(sockaddr **)&plocal,
+		&locallen,
+		(sockaddr **)&premote,
+		&remotelen);
+
+	memcpy(&_local, plocal, sizeof(sockaddr_in));
+	memcpy(&_peer, premote, sizeof(sockaddr_in));
+
+	strcpy_s(_szIP, inet_ntoa(_peer.sin_addr));
+	//_port = _peer.sin_port;
 }
 void ServLink::OnConnect()	// state Move from ACCEPTING to CONNECTED
 {
@@ -268,7 +240,6 @@ bool ServLink::CloseLink()
 	default:
 		Err("Error_CloseUnknow", 0);
 	}
-
 	/*
 		1、设置 l_onoff为0，则该选项关闭，l_linger的值被忽略，等于内核缺省情况
 		   close调用会立即返回给调用者，如果可能将会传输任何未发送的数据
@@ -289,45 +260,13 @@ bool ServLink::CloseLink()
 		_hEventClose = NULL;
 	}
 	_eState = STATE_DEAD;
-	_nCharID = -1; // 关闭链接时,将对应的角色id清除,防止关联到错误的角色上 NEX-18609
-
-	//if (m_msgSend.GetSize() > OUT_BUFFER_SIZE)
-	//{
-	//	m_msgSend.ResizeBuffer(OUT_BUFFER_SIZE);
-	//}
+	_nCharID = -1; //Notice：关闭链接时,将对应的角色id清除,防止关联到错误的角色上
 
 	return true;
 }
-void ServLink::UpdateAcceptAddr()
-{
-	int locallen, remotelen;
-	sockaddr_in *plocal = NULL, *premote = NULL;
-
-#ifdef _Use_ArrayBuf
-	char* pBuf = &_recvBuf[0];
-#else
-	char* pBuf = _recvBuf.beginWrite();
-#endif
-
-	GetAcceptExSockaddrs(
-		pBuf,	//传递给AcceptEx的那块内存
-		IN_BUFFER_SIZE - (sizeof(sockaddr_in) + 16) * 2,
-		sizeof(sockaddr_in) + 16,
-		sizeof(sockaddr_in) + 16,
-		(sockaddr **)&plocal,
-		&locallen,
-		(sockaddr **)&premote,
-		&remotelen);
-
-	memcpy(&_local, plocal, sizeof(sockaddr_in));
-	memcpy(&_peer, premote, sizeof(sockaddr_in));
-
-	strcpy_s(_szIP, inet_ntoa(_peer.sin_addr));
-	//_port = _peer.sin_port;
-}
 const ServerConfig& ServLink::Config(){ return _pMgr->_config; }
 
-//注意，在DoneIO的线程不能调用close，否则会死锁，只可以在服务器的maintain线程close
+//Notice：在DoneIO的线程不能调用close，否则会死锁，只可以在服务器的maintain线程close
 void ServLink::Maintain(time_t timenow)
 {
 	/* Check if client is an abuser. Abusing clients are:
@@ -407,30 +346,6 @@ void ServLink::Maintain(time_t timenow)
 				Err("ErrorAPI_WSAEnumNetworkEvents");
 			}
 		}*/
-	}
-}
-
-void ServLink::OnInvalidMessage(InvalidMessageEnum e, int nErrorCode, bool bToClient, int nParam/* = 0*/)
-{
-	//当前有效并且要发给客户端
-	if (!_bInvalid && bToClient)
-	{
-		stMsg msg;
-		//msg.eReason = e;
-		//msg.nErrorCode = nErrorCode;
-		//msg.nParam = nParam;
-		SendMsg(msg, sizeof(msg));
-	}
-
-	if (_bInvalid) return;
-
-	_eLastError = e;
-
-	Invalid(e);
-	{
-		stMsg msg;
-		//msg.eReason = e;
-		HandleNetMessage(&msg, sizeof(msg));
 	}
 }
 
@@ -526,49 +441,6 @@ bool ServLink::PostRecv(char* buf)
 	return false;
 }
 
-#ifdef _Use_ArrayBuf
-char* ServLink::OnRead_DoneIO(DWORD dwBytesTransferred)
-{
-	LastRecvIOTime(_pMgr->_timeNow);
-
-	_nRecvSize += dwBytesTransferred; // IO完成回调，接收字节递增
-	const DWORD c_off = sizeof(DWORD);
-	char* pPack = _recvBuf;
-	while (_nRecvSize >= c_off)
-	{
-		const DWORD c_msgSize = *((DWORD*)pPack);   // 【网络包：头4字节为消息体大小】
-		const DWORD c_packSize = c_msgSize + c_off; // 【一个消息包大小 = 长度字节 + 消息体大小】
-		const char* pMsg = pPack + c_off;           // 【后移4字节得：消息体指针】
-
-		// 1、检查消息大小
-		if (Config().nMaxPackage && c_msgSize >= Config().nMaxPackage) //消息太大
-		{
-			_nRecvSize = 0;
-			printf("TooHugePacket: Msg size %d Msg type %d", c_msgSize, *((DWORD*)pMsg)); // 【消息体：头4字节为消息类型】
-			OnInvalidMessage(Message_TooHugePacket, 0, true);
-			return _recvBuf;
-		}
-		// 2、是否接到完整包
-		if (c_packSize > _nRecvSize) break;         // 【包未收完：接收字节 < 包大小】
-
-		// 3、消息解码、处理 decode, unpack and ungroup
-		RecvMsg(pMsg, c_msgSize);
-
-		// 4、消息处理完毕，接收字节/包指针更新(处理下一个包)
-		_nRecvSize -= c_packSize;
-		pPack += c_packSize;
-	}
-
-	// 5、未处理的缓存内容(非完整包)，前移(抛弃处理掉的那些pack)
-	if (pPack != _recvBuf && _nRecvSize > 0)
-	{
-		memmove(_recvBuf, pPack, _nRecvSize); // net::Buffer可节省memmove，只在内存不足时，才会将数据移动至头部，见Buffer::makeSpace
-	}
-
-	// 5、返回可用缓冲区(前面的已被写了)
-	return _recvBuf + _nRecvSize;
-}
-#else
 char* ServLink::OnRead_DoneIO(DWORD dwBytesTransferred)
 {
 	LastRecvIOTime(_pMgr->_timeNow);
@@ -600,9 +472,15 @@ char* ServLink::OnRead_DoneIO(DWORD dwBytesTransferred)
 		_recvBuf.readerMove(c_packSize);
 		pPack += c_packSize;
 	}
+
+	/* 5、未处理的缓存内容(非完整包)，前移(抛弃处理掉的那些pack)
+	if (pPack != _recvBuf && _nRecvSize > 0)
+	{
+		memmove(_recvBuf, pPack, _nRecvSize); // net::Buffer可节省memmove，只在内存不足时，才会将数据移动至头部，见Buffer::makeSpace
+	}
+	return _recvBuf + _nRecvSize; // 6、返回可用缓冲区(前面的已被写了)*/
 	return _recvBuf.beginWrite();
 }
-#endif
 int ServLink::RecvMsg(const char* buffer, DWORD size)
 {
 	if (_bInvalid) return -1;
@@ -617,8 +495,7 @@ int ServLink::RecvMsg(const char* buffer, DWORD size)
 	if (Config().nRecvPacketCheckTime && Config().nRecvPacketLimit &&		// 配置有效
 		_pMgr->_timeNow - _recvPacketTime >= Config().nRecvPacketCheckTime) // 到检查时间了
 	{
-		if (_recvPacket < Config().nRecvPacketLimit)
-		{
+		if (_recvPacket < Config().nRecvPacketLimit){
 			_recvPacketTime = _pMgr->_timeNow;
 			_recvPacket = 0;
 		}else{
@@ -630,4 +507,51 @@ int ServLink::RecvMsg(const char* buffer, DWORD size)
 		}
 	}
 	return 0;
+}
+void ServLink::OnInvalidMessage(InvalidMessageEnum e, int nErrorCode, bool bToClient, int nParam/* = 0*/)
+{
+	if (!_bInvalid && bToClient)
+	{
+		stMsg msg;
+		//msg.eReason = e;
+		//msg.nErrorCode = nErrorCode;
+		//msg.nParam = nParam;
+		SendMsg(msg, sizeof(msg));
+	}
+
+	if (_bInvalid) return;
+
+	_eLastError = e;
+
+	Invalid(e);
+	{
+		stMsg msg;
+		//msg.eReason = e;
+		HandleNetMessage(&msg, sizeof(msg));
+	}
+}
+bool ServLink::SendMsg(stMsg& msg, DWORD msgSize)
+{
+	if (_bInvalid) return false;
+
+	if (msgSize >= MAX_SEND)
+	{
+		OnInvalidMessage(Message_Overflow7, 0, true);
+		return false;
+	}
+
+	cLock lock(_csLock);
+
+	//【brief.6】TODO：限制buf能增长到的最大长度，避免整体延时的内存占用；给append加个bool返回值
+	_sendBuf.append(msgSize);
+	_sendBuf.append(&msg, msgSize);
+
+	//【brief.7】并包优化，同时要在其它线程定期发送所有数据，避免消息延时
+	if (_sendBuf.readableBytes() < _sendBuf.size() / 4) return true;
+
+	if (_bCanWrite && msgSize > 0)
+	{
+		return PostSend(_sendBuf.beginRead(), _sendBuf.readableBytes());
+	}
+	return true;
 }
