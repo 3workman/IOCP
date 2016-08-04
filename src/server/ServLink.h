@@ -29,6 +29,9 @@
 		·此时，服务器可以简单的调用非阻塞式的recv将socket缓冲区中的数据全部读出来，一直到recv返回 WSAEWOULDBLOCK 为止
 		·这种设计非常适合那些可以牺牲数据吞吐量而换取巨大并发连接数的服务器
 		·用“非阻塞的recv”读socket时，若预计服务器会有爆发数据流，可以考虑投递一个或多个receive来取代“非阻塞的recv”
+	6、AcceptEx
+		·在投递AcceptEx的时候，我们还能够顺便在同一时间，收取client发来的第一组数据
+		·这也意味着，client仅仅连入但不发送数据的，我们就不会收到这个AcceptEx的完毕回调
 
 	【优化】
 		·目前的关闭方式：Invalid()里shutdown(SD_RECEIVE)，等待三分钟后才强制closesocket（等的时间太长了~囧）
