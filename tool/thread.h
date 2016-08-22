@@ -4,12 +4,13 @@
 
 class Thread{
 public:
-	Thread()
-	{
+	Thread(){
 		_bEnd = false; 
 		_hKillEvent = NULL;
 	}
-	virtual ~Thread(){};
+    ~Thread(){
+        EndThread();
+    };
 
 	typedef void(*Callback)(LPVOID);
 	bool RunThread(Callback func, LPVOID lParam = NULL)
