@@ -40,12 +40,6 @@ ServLink::ServLink(ServLinkMgr* pMgr)
 	_ovRecv.eType = IO_Read;
 
 	_nLinkID = ++s_nID; // LinkID´Ó1¿ªÊ¼
-
-	InitializeCriticalSection(&_csLock);
-}
-ServLink::~ServLink()
-{
-	DeleteCriticalSection(&_csLock);
 }
 
 void ServLink::DoneIOCallback(DWORD dwNumberOfBytesTransferred, EnumIO type)

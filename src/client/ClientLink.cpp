@@ -55,14 +55,6 @@ ClientLink::ClientLink(const ClientLinkConfig& info)
 	_ovRecv.eType = IO_Read;
 	_ovSend.eType = IO_Write;
 	_sClient = INVALID_SOCKET;
-
-	InitializeCriticalSection(&_csRead);
-	InitializeCriticalSection(&_csWrite);
-}
-ClientLink::~ClientLink()
-{
-	DeleteCriticalSection(&_csRead);
-	DeleteCriticalSection(&_csWrite);
 }
 
 void ClientLink::DoneIOCallback(DWORD dwNumberOfBytesTransferred, EnumIO type)

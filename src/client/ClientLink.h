@@ -45,7 +45,7 @@ public:
 	static void CALLBACK DoneIO(DWORD, DWORD, LPOVERLAPPED);
 
 	ClientLink(const ClientLinkConfig& info);
-	~ClientLink();
+    //~ClientLink(){};
 
 	static bool InitWinsock();
 	static bool CleanWinsock();
@@ -80,8 +80,8 @@ private:
 
 	bool _bCanWrite = true;
 
-	CRITICAL_SECTION _csRead;
-	CRITICAL_SECTION _csWrite;
+    cMutex _csRead;
+    cMutex _csWrite;
 
 	const ClientLinkConfig& _config;
 };

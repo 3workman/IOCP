@@ -78,7 +78,7 @@ class ServLink{
 	enum EStatus{ STATE_DEAD, STATE_ACCEPTING, STATE_CONNECTED };
 public:
 	ServLink(ServLinkMgr* p);
-	~ServLink();
+    //~ServLink(){};
 
 	static WORD s_nID;
 
@@ -161,7 +161,7 @@ private:
 	net::Buffer _recvBuf;
 	net::Buffer _sendBuf;
 
-	CRITICAL_SECTION _csLock;
+	cMutex _csLock;
 
 	My_OVERLAPPED _ovRecv;	// Used in WSARead() calls
 	My_OVERLAPPED _ovSend;	// Used in WSASend() calls
