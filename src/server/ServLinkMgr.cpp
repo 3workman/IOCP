@@ -15,7 +15,7 @@ ServLinkMgr::ServLinkMgr(const ServerConfig& info) : _config(info)
 }
 ServLinkMgr::~ServLinkMgr()
 {
-	if (_pThread) delete _pThread;
+	delete _pThread;
 }
 
 bool ServLinkMgr::InitWinsock()

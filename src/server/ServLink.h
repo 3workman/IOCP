@@ -169,7 +169,7 @@ private:
 	char _szIP[MAX_IP];
 	sockaddr_in _local;
 	sockaddr_in _peer;
-	SOCKET _sClient = INVALID_SOCKET;	// Socket used to communicate with client
+	SOCKET _sClient = INVALID_SOCKET;
 	WSAEVENT _hEventClose;
 
 	ServLinkMgr* const _pMgr;

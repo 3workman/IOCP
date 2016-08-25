@@ -54,7 +54,6 @@ ClientLink::ClientLink(const ClientLinkConfig& info)
 {
 	_ovRecv.eType = IO_Read;
 	_ovSend.eType = IO_Write;
-	_sClient = INVALID_SOCKET;
 }
 
 void ClientLink::DoneIOCallback(DWORD dwNumberOfBytesTransferred, EnumIO type)
