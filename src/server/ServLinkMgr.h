@@ -84,7 +84,7 @@ private:
 	LONG _nAccept;     // 正在等待连接的socket数量
 	LONG _nConnect;    // 已连接的socket数量
 
-	Thread* _pThread;
+    Thread* _pThread = NULL; //有了c++11，指针成员最好声明时即指定NULL，防止ctor中漏掉，出现野指针
 
 	SOCKET	_sListener;
 	std::vector<ServLink*> _vecLink;
@@ -104,7 +104,6 @@ void RunServerIOCP()
 	ServLinkMgr::InitWinsock();
 	mgr.CreateServer();
 
-	mgr.AssistThreadLoop();
 	Sleep(1000 * 600);
 }
 #endif

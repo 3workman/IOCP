@@ -105,6 +105,8 @@ bool ServLinkMgr::CreateServer()
 			}
 		}
 	}
+
+    AssistThreadLoop();
 	return true;
 }
 bool ServLinkMgr::Close()
