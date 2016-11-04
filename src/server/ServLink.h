@@ -60,6 +60,9 @@ class ServLink;
 class ServLinkMgr;
 struct ServerConfig;
 
+struct stMsg{
+};
+
 enum EnumIO{ IO_Write, IO_Read };
 
 struct My_OVERLAPPED : public OVERLAPPED
@@ -77,7 +80,9 @@ struct My_OVERLAPPED : public OVERLAPPED
 class ServLink{
 	enum EStatus{ STATE_DEAD, STATE_ACCEPTING, STATE_CONNECTED };
 public:
-	ServLink(ServLinkMgr* p);
+    static void CALLBACK DoneIO(DWORD, DWORD, LPOVERLAPPED);
+
+    ServLink(ServLinkMgr* p);
     //~ServLink(){};
 
 	static WORD s_nID;
@@ -118,8 +123,10 @@ public:
 
 	InvalidMessageEnum _eLastError = Message_NoError;
 	void OnInvalidMessage(InvalidMessageEnum e, int nErrorCode, bool bToClient, int nParam = 0);
-	void HandleClientMessage(stMsg* p, DWORD size){ printf("%s\n", (char*)p); /*放入主循环消息队列*/ SendMsg(*p, size); }
 	void HandleNetMessage(stMsg* p, DWORD size){}
+
+    //Notice：这里的stMsg*还是网络buffer里的，得拷贝一份到主循环的消息内存池中，在那边才真正HandleMsg，ServLink只负责收网络包，转给业务层
+    void HandleClientMessage(stMsg* p, DWORD size){ printf("%s\n", (char*)p); SendMsg(*p, size); }
 
 	void Err(LPCSTR sz){
 		printf("%s:%d - ID:%d\n", sz, WSAGetLastError(), _nLinkID);
@@ -129,7 +136,7 @@ public:
 	}
 
 
-	DWORD _recvPacket;		//得到了多少消息
+	DWORD _recvPacket;		//收到多少条消息
 	time_t _recvPacketTime;	//从哪个时间点开始计算的
 	time_t _recvIOTime;
 	__forceinline void RecvIOTimeStart(time_t timenow)

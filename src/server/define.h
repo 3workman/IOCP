@@ -4,11 +4,6 @@
 #define DEFAULT_MAC_LIMIT 5
 #define MAX_IP 16
 
-struct stMsg{
-};
-
-void CALLBACK DoneIO(DWORD, DWORD, LPOVERLAPPED);
-
 struct ServerConfig
 {
 	std::string strIP = "127.0.0.1";

@@ -69,7 +69,7 @@ bool ServLinkMgr::CreateServer()
 		printf("listen错误，请检查端口是否已经被使用！");
 		return false;
 	}
-	if (0 == BindIoCompletionCallback((HANDLE)_sListener, DoneIO, 0))
+    if (0 == BindIoCompletionCallback((HANDLE)_sListener, ServLink::DoneIO, 0))
 	{
 		printf("BindIoCompletionCallback错误，请检查系统资源是否耗尽！");
 		return false;

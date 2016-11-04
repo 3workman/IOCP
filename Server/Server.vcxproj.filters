@@ -49,9 +49,6 @@
     <ClCompile Include="main.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\server\callback.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\server\ServLink.cpp">
       <Filter>src</Filter>
     </ClCompile>

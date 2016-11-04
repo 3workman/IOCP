@@ -84,7 +84,6 @@
     <ClInclude Include="stdafx.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\src\server\callback.cpp" />
     <ClCompile Include="..\src\server\ServLink.cpp" />
     <ClCompile Include="..\src\server\ServLinkMgr.cpp" />
     <ClCompile Include="main.cpp" />
