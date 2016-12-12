@@ -74,16 +74,23 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="..\src\msg\MsgEnum.h" />
+    <ClInclude Include="..\src\msg\MsgPool.h" />
+    <ClInclude Include="..\src\msg\Player.h" />
+    <ClInclude Include="..\src\msg\PlayerMsg.h" />
     <ClInclude Include="..\src\public.h" />
     <ClInclude Include="..\src\server\define.h" />
     <ClInclude Include="..\src\server\ServLink.h" />
     <ClInclude Include="..\src\server\ServLinkMgr.h" />
     <ClInclude Include="..\tool\buffer.h" />
     <ClInclude Include="..\tool\cLock.h" />
+    <ClInclude Include="..\tool\Mempool.h" />
     <ClInclude Include="..\tool\thread.h" />
     <ClInclude Include="stdafx.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\src\msg\MsgPool.cpp" />
+    <ClCompile Include="..\src\msg\Player.cpp" />
     <ClCompile Include="..\src\server\ServLink.cpp" />
     <ClCompile Include="..\src\server\ServLinkMgr.cpp" />
     <ClCompile Include="main.cpp" />

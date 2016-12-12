@@ -1,5 +1,7 @@
 #pragma once
 
+struct stMsg{
+};
 
 struct ClientLinkConfig
 {

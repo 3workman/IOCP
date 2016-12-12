@@ -4,6 +4,10 @@
 #define DEFAULT_MAC_LIMIT 5
 #define MAX_IP 16
 
+struct stMsg{
+    DWORD msgId;
+};
+
 struct ServerConfig
 {
 	std::string strIP = "127.0.0.1";

@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "ServLink.h"
 #include "ServLinkMgr.h"
+#include "..\msg\MsgPool.h"
 
 #pragma comment (lib,"Ws2_32.lib")
 #pragma comment(lib,"Mswsock.lib")
@@ -552,6 +553,22 @@ void ServLink::OnInvalidMessage(InvalidMessageEnum e, int nErrorCode, bool bToCl
 		HandleNetMessage(&msg, sizeof(msg));
 	}
 }
+void ServLink::HandleNetMessage(stMsg* p, DWORD size)
+{
+}
+void ServLink::HandleClientMessage(stMsg* p, DWORD size)
+{
+    //Notice：这里的stMsg*还是网络buffer里的，得拷贝一份到主循环的消息内存池中，在那边才真正HandleMsg，ServLink只负责收网络包，转给业务层
+    printf("%s\n", (char*)p); SendMsg(*p, size);
+
+    /*TODO：
+        1、每个ServLink挂接一个Player指针
+        2、玩家登出时，将指针置空
+        3、在主循环HandleMsg之后，处理登出逻辑，防止消息池中出现野指针
+    */
+    sMsgPool.Insert(NULL, p, size);
+}
+
 bool ServLink::SendMsg(stMsg& msg, DWORD msgSize)
 {
 	if (_bInvalid) return false;

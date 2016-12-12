@@ -60,9 +60,6 @@ class ServLink;
 class ServLinkMgr;
 struct ServerConfig;
 
-struct stMsg{
-};
-
 enum EnumIO{ IO_Write, IO_Read };
 
 struct My_OVERLAPPED : public OVERLAPPED
@@ -123,10 +120,8 @@ public:
 
 	InvalidMessageEnum _eLastError = Message_NoError;
 	void OnInvalidMessage(InvalidMessageEnum e, int nErrorCode, bool bToClient, int nParam = 0);
-	void HandleNetMessage(stMsg* p, DWORD size){}
-
-    //Notice：这里的stMsg*还是网络buffer里的，得拷贝一份到主循环的消息内存池中，在那边才真正HandleMsg，ServLink只负责收网络包，转给业务层
-    void HandleClientMessage(stMsg* p, DWORD size){ printf("%s\n", (char*)p); SendMsg(*p, size); }
+    void HandleClientMessage(stMsg* p, DWORD size);
+    void HandleNetMessage(stMsg* p, DWORD size);
 
 	void Err(LPCSTR sz){
 		printf("%s:%d - ID:%d\n", sz, WSAGetLastError(), _nLinkID);

@@ -22,9 +22,6 @@
 
 class ClientLink;
 
-struct stMsg{
-};
-
 enum EnumIO{ IO_Write, IO_Read };
 
 struct My_OVERLAPPED : public OVERLAPPED
