@@ -23,8 +23,7 @@ class MsgPool {
 
     CPoolPage           _pool;
     HandleMsgFunc       _func[MSG_MAX_CNT];
-    cMutex              _mutex;
-    std::queue< std::pair<Player*, stMsg*> >  _queue; //Notice：为避免缓存指针野掉，主循环HandleMsg之后，处理登出逻辑
+    SafeQueue< std::pair<Player*, stMsg*> >  _queue; //Notice：为避免缓存指针野掉，主循环HandleMsg之后，处理登出逻辑
 public:
     static MsgPool& Instance(){ static MsgPool T; return T; }
     MsgPool();

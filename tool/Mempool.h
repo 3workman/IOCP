@@ -30,8 +30,7 @@
 * @ date 2014-11-21
 ************************************************************************/
 #pragma once
-#include <queue>
-#include "cLock.h"
+#include "SafeQueue.h"
 
 // 检查一段内存是否越界(头尾设标记)
 #define CHECKNU 6893    // 除0外任意值
@@ -45,10 +44,9 @@ if ((o)->__precheck##i != CHECKNU || (o)->__poscheck##i != CHECKNU){\
 }
 
 class CPoolPage{//线程安全的
-	cMutex            m_csLock;
 	const size_t	  m_pageSize;
 	const size_t	  m_pageNum;
-	std::queue<void*> m_queue;
+    SafeQueue<void*>  m_queue;
 
     bool Double(){ // 可设置Double次数限制
         // 无初始化，外界要operator new或调用new(ptr)
@@ -74,14 +72,14 @@ public:
 		Double();
 	}
 	void* Alloc(){
-		cLock lock(m_csLock);
-		if (m_queue.empty() && !Double()) return NULL; // 空STL容器调front()、pop()直接宕机
-		void* p = m_queue.front();
-		m_queue.pop();
-		return p;
+        void* ret = NULL;
+        if (!m_queue.pop(ret))
+        {
+            if (Double()) m_queue.pop(ret);
+        }
+        return ret;
 	}
 	void Dealloc(void* p){
-		cLock lock(m_csLock);
 		m_queue.push(p);
 	}
 };

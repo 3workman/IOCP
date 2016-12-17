@@ -59,6 +59,9 @@
     <ClInclude Include="..\src\msg\PlayerMsg.h">
       <Filter>msg</Filter>
     </ClInclude>
+    <ClInclude Include="..\tool\SafeQueue.h">
+      <Filter>tool</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">

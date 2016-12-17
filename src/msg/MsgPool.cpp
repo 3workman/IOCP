@@ -20,14 +20,13 @@ void MsgPool::Insert(Player* player, stMsg* msg, DWORD size)
 {
     stMsg* pMsg = (stMsg*)_pool.Alloc();
     memcpy(pMsg, msg, size);
-    cLock lock(_mutex);
     _queue.push(std::make_pair(player, pMsg));
 }
 void MsgPool::Handle()
 {
-    if (_queue.empty()) return;
-    auto& data = _queue.front();
-    stMsg* pMsg = data.second;
-    (data.first->*_func[pMsg->msgId])(*pMsg);
-    _queue.pop();
+    std::pair<Player*, stMsg*> data;
+    if (_queue.pop(data))
+    {
+        (data.first->*_func[data.second->msgId])(*data.second);
+    }
 }
