@@ -120,8 +120,10 @@ public:
 
 	InvalidMessageEnum _eLastError = Message_NoError;
 	void OnInvalidMessage(InvalidMessageEnum e, int nErrorCode, bool bToClient, int nParam = 0);
+
+    //TODO：这两个函数，可以改成指针，由外界设定
     void HandleClientMessage(stMsg* p, DWORD size);
-    void HandleNetMessage(stMsg* p, DWORD size);
+    void NotifyInvalidMsg(stMsg* p, DWORD size);
 
 	void Err(LPCSTR sz){
 		printf("%s:%d - ID:%d\n", sz, WSAGetLastError(), _nLinkID);

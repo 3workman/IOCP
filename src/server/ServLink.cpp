@@ -550,10 +550,10 @@ void ServLink::OnInvalidMessage(InvalidMessageEnum e, int nErrorCode, bool bToCl
 	{
 		stMsg msg;
 		//msg.eReason = e;
-		HandleNetMessage(&msg, sizeof(msg));
+		NotifyInvalidMsg(&msg, sizeof(msg));
 	}
 }
-void ServLink::HandleNetMessage(stMsg* p, DWORD size)
+void ServLink::NotifyInvalidMsg(stMsg* p, DWORD size)
 {
 }
 void ServLink::HandleClientMessage(stMsg* p, DWORD size)

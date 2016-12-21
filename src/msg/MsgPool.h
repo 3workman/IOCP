@@ -19,7 +19,6 @@ class Player;
 struct stMsg;
 class MsgPool {
     typedef void(Player::*HandleMsgFunc)(stMsg&);
-    friend class MsgDefine;
 
     CPoolPage           _pool;
     HandleMsgFunc       _func[MSG_MAX_CNT];
